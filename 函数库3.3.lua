@@ -70,7 +70,7 @@ function add_function(subs)
 					{class="label",x=2,y=0,width=1,height=1,label="函数编辑"},
 					{class="dropdown",x=2,y=1,width=1,height=1,name="fx",items=name_list(),value=name_list()[1] or "no fx"}
 					}
-			eg,eg_res=aegisub.dialog.display(edit_gui,{"complate","edit","add"})
+			eg,eg_res=aegisub.dialog.display(edit_gui,{"complete","edit","add"})
 			local fxi=string.match(eg_res.fx,"%[(%d+)%]")*1
 			if eg == "add" then
 				add_gui = {
