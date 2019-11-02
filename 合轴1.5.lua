@@ -41,6 +41,8 @@ function merge_ass(subs)
 	
 	local input_files={}
 	local output_file=""
+	local ds=true
+	local comment_b=false
 	repeat
 		all_gui={
 			{class="label",x=1,y=0,width=3,height=1,label="输入文件数:"..#input_files},
@@ -48,10 +50,12 @@ function merge_ass(subs)
 			{class="dropdown",x=1,y=2,width=6,height=1,name="file",items=input_files,value=input_files[1]},
 			{class="label",x=1,y=3,width=1,height=1,label="文件保存至:"},
 			{class="edit",x=2,y=3,width=10,height=1,name="output",value=output_file},
-			{class="checkbox",x=1,y=4,width=1,height=1,name="delete_style",value=true,label="删除未使用的样式"},
-			{class="checkbox",x=1,y=5,width=1,height=1,name="comment",value=false,label="忽略注释行",hint="注释行将不会被复制"}
+			{class="checkbox",x=1,y=4,width=1,height=1,name="delete_style",value=ds,label="删除未使用的样式"},
+			{class="checkbox",x=1,y=5,width=1,height=1,name="comment",value=comment_b,label="忽略注释行",hint="注释行将不会被复制"}
 			}
 		gui_res,gui_config = aegisub.dialog.display(all_gui,{"OK","Input","Output","Cancel"})
+		ds=gui_config.delete_style
+		comment_b=gui_config.comment
 		if gui_res == "Input" then
 			input_files=aegisub.dialog.open("input ass file","","","ass file (.ass)|*.ass", true, true)
 		elseif gui_res == "Output" then
@@ -183,27 +187,31 @@ function merge_ass(subs)
 			end
 		end
 		
-		local used_styles={}
+		local final_styles={}
 		if gui_config.delete_style then
 			for k,file_tbl in ipairs(files_tbl) do
 				for dli = 1,#file_tbl.dialogue_lines do
-					tbl_insert(used_styles,file_tbl.dialogue_lines[dli].style)
+					tbl_insert(final_styles,file_tbl.dialogue_lines[dli].style)
 				end
 				for fli = 1,#file_tbl.fx_lines do
-					tbl_insert(used_styles,file_tbl.fx_lines[fli].style)
+					tbl_insert(final_styles,file_tbl.fx_lines[fli].style)
 				end
 				if not gui_config.comment then
 					for cli = 1,#file_tbl.comment_lines do
-						tbl_insert(used_styles,file_tbl.comment_lines[cli].style)
+						tbl_insert(final_styles,file_tbl.comment_lines[cli].style)
 					end
 				end
+			end
+		else 
+			for k,style in ipairs(all_styles) do
+				table.insert(final_styles,style.name)
 			end
 		end
 		
 		output:write("\n[V4+ Styles]\n")
 		output:write("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n")
 		for k,style in ipairs(all_styles) do
-			if (not gui_config.delete_style) or in_or_not(used_styles,style.name) then
+			if in_or_not(final_styles,style.name) then
 				output:write("Style: "..style.name..style.text.."\n")
 			end
 		end
@@ -244,8 +252,8 @@ function merge_ass(subs)
 				end_t=0
 			end
 			if #file_tbl.dialogue_lines > 0 then
-				table.insert(files_tbl[k].dialogue_lines,{start_time=start_t, end_time=start_t, front="Comment: 0,"..time_to_ass(start_t)..","..time_to_ass(start_t)..",", style=used_styles[1], behind=",↓↓↓,0,0,0,,-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-"})
-				table.insert(files_tbl[k].dialogue_lines,{start_time=end_t, end_time=end_t, front="Comment: 0,"..time_to_ass(end_t)..","..time_to_ass(end_t)..",", style=used_styles[1], behind=",↑↑↑,0,0,0,,-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-"})
+				table.insert(files_tbl[k].dialogue_lines,{start_time=start_t, end_time=start_t, front="Comment: 0,"..time_to_ass(start_t)..","..time_to_ass(start_t)..",", style=final_styles[1], behind=string.format(",↓↓↓,0,0,0,,[%d][%s]-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-↓-",k,input_files[k])}) 
+				table.insert(files_tbl[k].dialogue_lines,{start_time=end_t, end_time=end_t, front="Comment: 0,"..time_to_ass(end_t)..","..time_to_ass(end_t)..",", style=final_styles[1], behind=string.format(",↑↑↑,0,0,0,,[%d][%s]-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-",k,input_files[k])})
 			end
 		end
 		
