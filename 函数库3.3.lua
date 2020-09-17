@@ -71,7 +71,6 @@ function add_function(subs)
 					{class="dropdown",x=2,y=1,width=1,height=1,name="fx",items=name_list(),value=name_list()[1] or "no fx"}
 					}
 			eg,eg_res=aegisub.dialog.display(edit_gui,{"complete","edit","add"})
-			local fxi=string.match(eg_res.fx,"%[(%d+)%]")*1
 			if eg == "add" then
 				add_gui = {
 						{class="label",x=1,y=0,width=3,height=1,label="function_name"},
@@ -84,12 +83,13 @@ function add_function(subs)
 					table.insert(fxs,{name=ag_res.name,fx=ag_res.fx})
 				end
 			elseif eg == "edit" then
+				local fxi=string.match(eg_res.fx,"%[(%d+)%]")*1
 				r_gui = {
-						{class="label",x=1,y=0,width=3,height=1,label="function_name"},
-						{class="edit",x=4,y=0,width=30,height=1,name="name",value=fxs[fxi].name},
-						{class="label",x=1,y=1,width=1,height=1,label="function"},
-						{class="textbox",x=1,y=2,width=60,height=20,name="fx",text=fxs[fxi].fx},
-						}
+					{class="label",x=1,y=0,width=3,height=1,label="function_name"},
+					{class="edit",x=4,y=0,width=30,height=1,name="name",value=fxs[fxi].name},
+					{class="label",x=1,y=1,width=1,height=1,label="function"},
+					{class="textbox",x=1,y=2,width=60,height=20,name="fx",text=fxs[fxi].fx},
+				}
 				rg,rg_res=aegisub.dialog.display(r_gui,{"complete","delete","cancel"})	
 				if rg == "complete" then
 					fxs[fxi].name=rg_res.name
